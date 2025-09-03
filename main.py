@@ -1,6 +1,6 @@
 # main.py
 import os
-import httpx
+import requests
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List
@@ -87,29 +87,29 @@ async def analyze_answers(submission: QASubmission):
     print(final_prompt)
     print("----------------------------")
 
-    # --- 6. Gọi Gemini API bằng httpx ---
-    # Sử dụng async client để không block server trong lúc chờ phản hồi
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(
-                GEMINI_API_URL,
-                json={
-                    "contents": [{
-                        "parts": [{"text": final_prompt}]
-                    }]
-                },
-                timeout=120 # Đặt thời gian chờ để tránh treo
-            )
-            response.raise_for_status() # Báo lỗi nếu status code là 4xx hoặc 5xx
+    # --- 6. Gọi Gemini API bằng requests (synchronous) ---
+    # Chuyển endpoint sang sync để tránh blocking event loop khi gọi request đồng bộ.
+    try:
+        response = requests.post(
+            GEMINI_API_URL,
+            json={
+                "contents": [{
+                    "parts": [{"text": final_prompt}]
+                }]
+            },
+            timeout=120
+        )
+        response.raise_for_status()
 
-            gemini_data = response.json()
-            analysis_result = gemini_data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "Không có nội dung trả về.")
-            
-            return {"analysis": analysis_result}
+        gemini_data = response.json()
+        analysis_result = gemini_data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "Không có nội dung trả về.")
+        return {"analysis": analysis_result}
 
-        except httpx.HTTPStatusError as e:
-            # Xử lý lỗi từ API (ví dụ: key không hợp lệ)
-            return {"error": f"Lỗi API: {e.response.status_code}", "details": e.response.text}
-        except Exception as e:
-            # Xử lý các lỗi khác (ví dụ: mạng)
-            return {"error": "Đã xảy ra lỗi không xác định", "details": str(e)}
+    except requests.HTTPError as e:
+        # Xử lý lỗi từ API (ví dụ: key không hợp lệ)
+        resp = e.response
+        details = resp.text if resp is not None else str(e)
+        status = resp.status_code if resp is not None else None
+        return {"error": f"Lỗi API: {status}", "details": details}
+    except Exception as e:
+        return {"error": "Đã xảy ra lỗi không xác định", "details": str(e)}
