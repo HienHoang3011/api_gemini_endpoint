@@ -98,7 +98,7 @@ async def analyze_answers(submission: QASubmission):
                         "parts": [{"text": final_prompt}]
                     }]
                 },
-                timeout=30 # Đặt thời gian chờ để tránh treo
+                timeout=120 # Đặt thời gian chờ để tránh treo
             )
             response.raise_for_status() # Báo lỗi nếu status code là 4xx hoặc 5xx
 
