@@ -6,6 +6,7 @@ from fastapi.concurrency import run_in_threadpool # 1. Import run_in_threadpool
 from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
 # --- (Phần Pydantic và prompt giữ nguyên) ---
@@ -18,6 +19,13 @@ class QASubmission(BaseModel):
     items: List[QAPair]
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 prompt = """
 Bạn là một AI tư vấn hướng nghiệp thông minh và tinh tế. Nhiệm vụ của bạn là phân tích thông tin do người dùng cung cấp và tìm ra **một** danh hiệu phù hợp nhất cho họ từ bảng tham chiếu.
 
