@@ -83,7 +83,7 @@ def call_gemini_sync(prompt_text: str):
     except Exception as e:
         return {"error": "Đã xảy ra lỗi không xác định", "details": str(e)}
 
-@app.post("/analyze-answers/")
+@app.post("/analyze-answers")
 async def analyze_answers(submission: QASubmission):
     """
     Endpoint này nhận Q&A, xây dựng prompt và gọi hàm đồng bộ
